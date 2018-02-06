@@ -1,0 +1,164 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-input/paper-textarea.html">
+
+<link rel="import" href="../iron-form/iron-form.html">
+
+<link rel="import" href="../oc-core-utils/oc-store.html">
+<link rel="import" href="../oc-toast/oc-toast.html">
+<link rel="import" href="../oc-organisation-api/oc-organisation-api.html">
+<link rel="import" href="../oc-leaflet-map/oc-leaflet-map.html">
+
+<dom-module id="oc-add-address">
+
+    <template>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css"
+              integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy"
+              crossorigin="anonymous">
+        <style is="custom-style">
+
+            :host {
+                display: block;
+                background: #fff;
+                color: #000;
+            }
+
+            .category-heading {
+                border-top: 1px #cecece solid;
+                border-bottom: 1px #cecece solid;
+                background: #f8f8f8;
+                color: #000;
+            }
+
+            .submit-form {
+                background-color: #e0992f;
+                width: 100%;
+                height: 50px;
+                margin: 10px 0;
+            }
+
+        </style>
+        <oc-organisation-api id="organisationApi"></oc-organisation-api>
+        <oc-toast id="toast"></oc-toast>
+
+        <app-location route="{{route}}" query-params="{{queryParams}}"></app-location>
+
+        <!-- this app-route manages the top-level routes -->
+        <app-route
+                route="{{route}}"
+                pattern="/"
+                data="{{routeData}}"
+                tail="{{subroute}}"></app-route>
+
+
+        <iron-form id="businessAddresForm">
+            <form method="get" action="/foo">
+                <oc-leaflet-map id="map" longitude="{{_lng}}" latitude="{{_lat}}"></oc-leaflet-map>
+                <!-- I will add a map for the lat lng -->
+                <paper-input name="longitude" label="Longitude" value="[[_lat]]"></paper-input>
+                <paper-input name="latitude" label="Latitude Name" value="[[_lng]]"></paper-input>
+                <paper-input name="name" label="Name" required></paper-input>
+                <paper-input name="businessName" required label="Business Name"></paper-input>
+                <paper-input name="streetNumber" required label="Street Number"></paper-input>
+                <paper-input name="streetName" required label="Street Name"></paper-input>
+                <paper-input name="complex" label="Complex"></paper-input>
+                <paper-input name="suburb" required label="Suburt"></paper-input>
+                <paper-input name="city" required label="City"></paper-input>
+                <paper-input name="postalCode" required label="Postal Code"></paper-input>
+                <paper-textarea name="note" label="Note"></paper-textarea>
+
+                <div class="row category-heading">
+                    <div class="col-sm-12 text-center">
+                        <paper-button raised on-tap="_submitForm" class="submit-form">Submit</paper-button>
+                    </div>
+                </div>
+            </form>
+        </iron-form>
+    </template>
+    <script>
+		class OcAddAddress extends Ordercloud.ReduxMixin(Polymer.Element) {
+			// TODO: This component can be split in 2. This grid and the add new delivery address
+			static get is() {
+				return 'oc-add-address';
+			}
+
+			static get properties() {
+				return {
+					_lat: {
+						type: Number,
+						notify: true,
+					},
+					_lng: {
+						type: Number,
+						notify: true,
+					},
+
+					_addNewAddress: {
+						type: Boolean,
+						value: false
+					},
+					_organisationId: {
+						type: Number,
+						notify: true,
+						statePath: 'config.organisationId'
+					},
+
+					visible: {
+						type: Boolean,
+						observer: '_visibleChanged'
+					},
+				}
+			}
+
+			ready() {
+				super.ready();
+				// Will be trigger once form validation passes
+				this._setFormSubmitEvent();
+			}
+
+			_submitForm(event) {
+				const formValid = this.$.businessAddresForm.validate();
+				if (formValid) this.$.businessAddresForm.submit();
+			}
+
+			_setFormSubmitEvent() {
+				this.$.businessAddresForm.addEventListener('iron-form-submit', (event) => {
+					this._setDeliveryAddresses(JSON.stringify(event.detail));
+				});
+			}
+
+			// TODO: Add failure message
+			_setDeliveryAddresses(addressData) {
+				this.$.organisationApi.setDeliveryAddresses(this._organisationId, addressData)
+					.then((event) => {
+						// When data is saved correctly we auto clean fields
+						this.$.businessAddresForm.reset();
+						this.$.toast.success("New Address Added");
+
+						// This will become a paramater as soon it is being used at different places
+						this.dispatchEvent(new CustomEvent('change-page', {
+							bubbles: true, composed: true, detail:
+								{
+									url: '/business-addresses',
+									data: {name: 'refresh', value: true}
+								},
+						}));
+					})
+			}
+
+			_visibleChanged(visible) {
+				if (visible) {
+					this.dispatchEvent(new CustomEvent('change-section', {
+						bubbles: true, composed: true, detail: {title: 'Home'}
+					}));
+				}
+			}
+		}
+
+		customElements.define(OcAddAddress.is, OcAddAddress);
+
+    </script>
+
+</dom-module>
+

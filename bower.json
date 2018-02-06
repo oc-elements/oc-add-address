@@ -1,0 +1,24 @@
+{
+  "name": "oc-add-address",
+  "description": "Input Form for adding address",
+  "main": "oc-add-address.html",
+  "dependencies": {
+    "polymer": "Polymer/polymer#^2.0.0",
+    "paper-button": "^2.0.0",
+    "paper-input": "^2.1.1",
+    "iron-form": "^2.1.3",
+
+    "oc-core-utils": "git://github.com/oc-elements/oc-core-utils#2.x",
+    "oc-leaflet-map": "git://github.com/oc-elements/oc-leaflet-map",
+    "oc-organisation-api": "git://github.com/oc-elements/oc-organisation-api#2.x",
+    "oc-toast": "git://github.com/oc-elements/oc-toast#2.x"
+  },
+  "devDependencies": {
+    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^2.0.0",
+    "web-component-tester": "Polymer/web-component-tester#^6.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^1.0.0"
+  },
+  "resolutions": {
+    "polymer": "^2.0.0"
+  }
+}
