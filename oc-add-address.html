@@ -58,15 +58,15 @@
                 <!-- I will add a map for the lat lng -->
                 <paper-input name="longitude" label="Longitude" value="[[_lat]]"></paper-input>
                 <paper-input name="latitude" label="Latitude Name" value="[[_lng]]"></paper-input>
-                <paper-input name="name" label="Name" required></paper-input>
-                <paper-input name="businessName" required label="Business Name"></paper-input>
-                <paper-input name="streetNumber" required label="Street Number"></paper-input>
-                <paper-input name="streetName" required label="Street Name"></paper-input>
-                <paper-input name="complex" label="Complex"></paper-input>
-                <paper-input name="suburb" required label="Suburt"></paper-input>
-                <paper-input name="city" required label="City"></paper-input>
-                <paper-input name="postalCode" required label="Postal Code"></paper-input>
-                <paper-textarea name="note" label="Note"></paper-textarea>
+                <paper-input name="name" label="Name" required value="[[updateAddress.name]]"></paper-input>
+                <paper-input name="businessName" required label="Business Name" value="[[updateAddress.businessName]]"></paper-input>
+                <paper-input name="streetNumber" required label="Street Number" value="[[updateAddress.streetNumber]]"></paper-input>
+                <paper-input name="streetName" required label="Street Name" value="[[updateAddress.streetName]]"></paper-input>
+                <paper-input name="complex" label="Complex" value="[[updateAddress.complex]]"></paper-input>
+                <paper-input name="suburb" required label="Suburt" value="[[updateAddress.suburb]]"></paper-input>
+                <paper-input name="city" required label="City" value="[[updateAddress.city]]"></paper-input>
+                <paper-input name="postalCode" required label="Postal Code" value="[[updateAddress.postalCode]]"></paper-input>
+                <paper-textarea name="note" label="Note" value="[[updateAddress.note]]"></paper-textarea>
 
                 <div class="row category-heading">
                     <div class="col-sm-12 text-center">
@@ -108,6 +108,18 @@
 						type: Boolean,
 						observer: '_visibleChanged'
 					},
+
+                    // This will contain the id of the address that need to be updated
+					updateAddress: {
+						type: Object,
+					},
+
+					/* Either add or edit*/
+					mode: {
+						type: String,
+						value: "add",
+						computed: '_changeMode(updateAddress)'
+					}
 				}
 			}
 
@@ -117,6 +129,13 @@
 				this._setFormSubmitEvent();
 			}
 
+			_changeMode(address) {
+				if (address)
+					return "edit";
+				else
+					return "add";
+			}
+
 			_submitForm(event) {
 				const formValid = this.$.businessAddresForm.validate();
 				if (formValid) this.$.businessAddresForm.submit();
@@ -124,7 +143,11 @@
 
 			_setFormSubmitEvent() {
 				this.$.businessAddresForm.addEventListener('iron-form-submit', (event) => {
-					this._setDeliveryAddresses(JSON.stringify(event.detail));
+					if(this.mode === "add") {
+						this._setDeliveryAddresses(JSON.stringify(event.detail));
+					} else {
+						this._updateDeliveryAddress(this.updateAddress.id, JSON.stringify(event.detail));
+					}
 				});
 			}
 
@@ -135,6 +158,25 @@
 						// When data is saved correctly we auto clean fields
 						this.$.businessAddresForm.reset();
 						this.$.toast.success("New Address Added");
+
+						// This will become a paramater as soon it is being used at different places
+						this.dispatchEvent(new CustomEvent('change-page', {
+							bubbles: true, composed: true, detail:
+								{
+									url: '/business-addresses',
+									data: {name: 'refresh', value: true}
+								},
+						}));
+					})
+			}
+
+			_updateDeliveryAddress(addressId, addressData) {
+				this.$.organisationApi.updateDeliveryAddress(addressId, addressData)
+					.then(() => {
+						// When data is saved correctly we auto clean fields
+						this.$.businessAddresForm.reset();
+						this.$.toast.success("Address Updated");
+						this.updateAddress = undefined;
 
 						// This will become a paramater as soon it is being used at different places
 						this.dispatchEvent(new CustomEvent('change-page', {
@@ -161,4 +203,3 @@
     </script>
 
 </dom-module>
-
